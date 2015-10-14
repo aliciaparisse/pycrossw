@@ -1,17 +1,35 @@
 #Main application : calls all the other files
-import urllib2
+import urllib
+from lxml import etree
+from words_def import definitionRepresentation
+from crossword_construction import main as mainCross
 
 def getMetWords(words):
     wordsGen = []
-    query = "http://boundinanutshell.com/metaphor-magnet/q?kw=" + words + "&xml=true"
-    data = urllib2.urlopen(query)
+    query = "http://ngrams.ucd.ie/metaphor-magnet-acl/q?kw=" + '+'.join(words.split(' ')) + "&xml=true"
+    data = urllib.urlopen(query)
     content_text = data.read()
+
+    root = etree.fromstring(content_text)
+    for child in root:
+        for elem in child.findall("Text"):
+            str = elem.text.strip()
+            i = str.find(":")
+            wordsGen.append(str[i+1:])
+            wordsGen.append(str[:i])
     return wordsGen;
 
 def main():
-    var = raw_input("Enter the two words from which you would like to generate >>")
-    getMetWords(var)
+    #var = raw_input("Enter the two words from which you would like to generate >>")
+    var = "love"
+    words = getMetWords(var)
+    wordsAndDef = definitionRepresentation(words[:150])
+    # words = ["bla","hahaI'm bla"],\
+    #         ["ble","Hehe I'm ble"]
 
+    # getOneDefinition(words[0][0])
+
+    mainCross(wordsAndDef)
     return;
 
 if __name__ == "__main__":
