@@ -2,7 +2,7 @@
 import urllib
 from lxml import etree
 from crosswords_evaluation import evaluateCrosswords
-from words_def import definitionRepresentation
+from words_def import getBestDefs
 
 def getMetWords(words):
     wordsGen = []
@@ -27,7 +27,9 @@ def main():
     words = getMetWords(var)
 
     [bestCw,selectedWords] = evaluateCrosswords(words,1,1,20)
-    print definitionRepresentation(selectedWords,dictionnary)
+    print getBestDefs(selectedWords,dictionnary,3)
+    print bestCw.current_word_list
+    print bestCw.solution()
 
     return;
 

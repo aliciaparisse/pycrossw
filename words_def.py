@@ -1,29 +1,17 @@
-#File dedicated to retrieving definition of words
+# File dedicated to retrieving definition of words
 
 import urllib
 import json
 from random import shuffle
 
-api_key="0a191cb87c353380850028a93e705f18a8a1cebe13f4e8c15"
-root_url="http://api.wordnik.com:80/v4"
+api_key = "0a191cb87c353380850028a93e705f18a8a1cebe13f4e8c15"
+root_url = "http://api.wordnik.com:80/v4"
 
-#Dictionnary representing the different possibilities(used for function improved_definition)
-options = { 0 : "def", 1 : "synonym", 2 : "antonym", 3 : "hypernym", 4 : "hoponym", 5 : "same-context", 6: "equivalent"}
+# Dictionnary representing the different possibilities(used for function improved_definition)
+options = {0: "def", 1: "synonym", 2: "antonym", 3: "hypernym", 4: "hoponym", 5: "same-context", 6: "equivalent"}
 
 
-
-def getDefinitions(word):
-
-    query = root_url+"/word.json/" + word + "/definitions?"
-    query  += "api_key=" + api_key
-    print query
-    data = urllib.urlopen(query)
-    jsonDef = json.load(data)
-
-    return jsonDef;
-
-def getOneDefinition(word,dic,json):
-
+def getOneDefinition(word, dic, json):
     definition = ""
 
     l = len(json)
@@ -41,55 +29,64 @@ def getOneDefinition(word,dic,json):
     dic[word] = definition
     return definition;
 
-def improved_definition(word,dic):
-    #Using the query /relatedWords, different types of related words are interesting
-    #Synonymes, antonymes, hypernyms, hyponyms and same-context
 
-    #We have two possible queries : either we choose to obtain the definition,
-    #or we use some of the related words.
+# Function needed to construct the dictionnary
+def improved_definition(word, dic):
+    # Using the query /relatedWords, different types of related words are interesting
+    # Synonymes, antonymes, hypernyms, hyponyms and same-context
 
-    #Initialization of variables
+    # We have two possible queries : either we choose to obtain the definition,
+    # or we use some of the related words.
+
+    # Initialization of variables
     definition = ""
-    nbNone=0
+    nbNone = 0
 
-    #Randomly choosing the option
+    # Randomly choosing the option
     indexes = list(xrange(7))
-    shuffle(indexes)
-    option = indexes[0]
 
-    if option == 0: #Plain definition
+    while indexes:
+        shuffle(indexes)
+        option = indexes[0]
 
-        #Query to the API ------------------------------------
-        query = root_url+"/word.json/" + word + "/definitions?"
-        query  += "api_key=" + api_key
-        data = urllib.urlopen(query)
-        jsonDef = json.load(data)
+        if option == 0:  # Plain definition
 
-        #Getting just one definition
-        definition = getOneDefinition(word,dic,jsonDef)
+            # Query to the API ------------------------------------
+            query = root_url + "/word.json/" + word + "/definitions?"
+            query += "api_key=" + api_key
+            data = urllib.urlopen(query)
+            jsonDef = json.load(data)
 
-    else : #Synonym, antonym, hepernym, hoponym or same-context words
-        res = []
-        #Query to the API ------------------------------------
-        query = root_url+"/word.json/" + word + "/relatedWords?"
-        query  += "api_key=" + api_key
-        query  += "&limitPerRelationshipType=10"
-        data = urllib.urlopen(query)
-        jsonObj = json.load(data)
+            # Getting just one definition
+            definition = getOneDefinition(word, dic, jsonDef)
 
-        #Getting the list of words from the option we choose
-        for relation  in jsonObj:
-            if relation["relationshipType"] == options[option]:
-                res = relation["words"]
-                break
+        else:  # Synonym, antonym, hepernym, hoponym or same-context words
+            # Query to the API ------------------------------------
+            query = root_url + "/word.json/" + word + "/relatedWords?"
+            query += "api_key=" + api_key
+            query += "&limitPerRelationshipType=10"
+            data = urllib.urlopen(query)
+            jsonObj = json.load(data)
 
-        if  res == []:
-            definition = "None"
-            nbNone +=1
+            # Getting the list of words from the option we choose
+            for relation in jsonObj:
+                if relation["relationshipType"] == options[option]:
+                    definition = relation["words"]
+                    break
 
-    return definition;
+        if definition != "":
+            break
+        else:
+            indexes.remove(option)
 
-#Function needed to launch the crosswords
+    if definition == "":
+        definition = "None"
+        nbNone += 1
+
+    return definition, option;
+
+
+# Function needed to launch the crosswords
 def getEmptyRepr(words):
     repres = []
     for word in words:
@@ -98,16 +95,51 @@ def getEmptyRepr(words):
     return repres;
 
 
+def representationFitness(triedOptions):
+    r = 1.0 / 7.0
+    target = [r, r, r, r, r, r, r]
 
-def definitionRepresentation (words,dic):
-    dic =  {}
+    # Getting the  result in  the same  form as the target
+    result = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    for i in xrange(len(triedOptions)):
+        result[triedOptions[i]] += 1.0
+    result = [x / float(len(triedOptions)) for x in result]
+
+    # Calculating the fitness
+    fit = 0
+    for i in xrange(len(target)):
+        fit += abs(target[i] - result[i])
+
+    return fit;
+
+def getBestDefs (words,dic, nbIt):
+    bestFit = len (words)
+
+    for i in xrange(nbIt):
+        [repres, triedOptions] = definitionRepresentation(words, dic)
+
+        fitness = representationFitness(triedOptions)
+        print fitness
+        if fitness < bestFit:
+            bestRep = repres
+            bestFit = fitness
+
+    return bestRep;
+
+def definitionRepresentation(words, dic):
+    dic = {}
+    triedOptions = []
 
     repres = []
     for word in words:
         if (word not in dic):
-            defin = improved_definition(word,dic)
+            [defin, opt] = improved_definition(word, dic)
+            triedOptions.append(opt)
             if (defin != ""):
-                repres.append([word,defin])
-        else :
-            repres.append([word,dic[word]])
-    return repres;
+                repres.append([word, defin])
+        else:
+            repres.append([word, dic[word]])
+
+
+    return repres, triedOptions;
