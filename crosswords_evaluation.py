@@ -10,16 +10,16 @@ from deap import creator
 from deap import tools
 
 
-def evaluateCrosswords(words, fitOption):
+def evaluateCrosswords(words, fitOption, nbIt, nbWords):
     bestFit = 0
     bestCw = []
 
-    for i in xrange(5):
+    for i in xrange(nbIt):
 
         shuffle(words)
 
         #wordsAndDef = definitionRepresentation(words[:20],dictionnary)
-        wordsAndDef = getEmptyRepr(words[:20])
+        wordsAndDef = getEmptyRepr(words[:nbWords])
 
         crossword = mainC(wordsAndDef)
         a = fitness(crossword, fitOption)
@@ -28,7 +28,11 @@ def evaluateCrosswords(words, fitOption):
             bestCw = crossword
 
     print bestFit
-    return bestCw;
+    newWords = []
+    for word in bestCw.current_word_list:
+        newWords.append(str(word))
+
+    return bestCw, newWords;
 
 def fitness(crossword, option):
     #The crossword parameter represents the crossword

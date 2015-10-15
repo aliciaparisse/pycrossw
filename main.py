@@ -2,7 +2,7 @@
 import urllib
 from lxml import etree
 from crosswords_evaluation import evaluateCrosswords
-
+from words_def import definitionRepresentation
 
 def getMetWords(words):
     wordsGen = []
@@ -21,11 +21,14 @@ def getMetWords(words):
 
 
 def main():
+    dictionnary = {}
     # var = raw_input("Enter the two words from which you would like to generate >>")
     var = "love"
     words = getMetWords(var)
 
-    evaluateCrosswords(words,1)
+    [bestCw,selectedWords] = evaluateCrosswords(words,1,1,20)
+    print definitionRepresentation(selectedWords,dictionnary)
+
     return;
 
 
