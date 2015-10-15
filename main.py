@@ -1,8 +1,8 @@
-#Main application : calls all the other files
+# Main application : calls all the other files
 import urllib
 from lxml import etree
-from words_def import definitionRepresentation
-from crossword_construction import main as mainCross
+from crosswords_evaluation import evaluateCrosswords
+
 
 def getMetWords(words):
     wordsGen = []
@@ -15,22 +15,19 @@ def getMetWords(words):
         for elem in child.findall("Text"):
             str = elem.text.strip()
             i = str.find(":")
-            wordsGen.append(str[i+1:])
+            wordsGen.append(str[i + 1:])
             wordsGen.append(str[:i])
     return wordsGen;
 
+
 def main():
-    #var = raw_input("Enter the two words from which you would like to generate >>")
+    # var = raw_input("Enter the two words from which you would like to generate >>")
     var = "love"
     words = getMetWords(var)
-    wordsAndDef = definitionRepresentation(words[:150])
-    # words = ["bla","hahaI'm bla"],\
-    #         ["ble","Hehe I'm ble"]
 
-    # getOneDefinition(words[0][0])
-
-    mainCross(wordsAndDef)
+    evaluateCrosswords(words,1)
     return;
+
 
 if __name__ == "__main__":
     main()

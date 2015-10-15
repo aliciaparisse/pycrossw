@@ -12,12 +12,13 @@ def getDefinitions(word):
 
     query = root_url+"/word.json/" + word + "/definitions?"
     query  += "api_key=" + api_key
+    print query
     data = urllib.urlopen(query)
     jsonDef = json.load(data)
 
     return jsonDef;
 
-def getOneDefinition(word):
+def getOneDefinition(word,dic):
 
     definition = ""
 
@@ -34,12 +35,37 @@ def getOneDefinition(word):
         else:
             break
 
+    dic[word] = definition
     return definition;
 
-def definitionRepresentation (words):
+def improve_definition(word):
+    #Using the query /relatedWords, different types of related words are interesting
+    #Synonymes, antonymes, hypernyms, hyponyms and same-context
+
+    #We have two possible queries : either we choose to obtain the definition,
+    #or we use some of the related words.
+
+    #Dictionnary representing the different possibilities
+
+
+    return 0;
+
+def getEmptyRepr(words):
     repres = []
     for word in words:
-        if (getOneDefinition(word) != ""):
-            repres.append([word,getOneDefinition(word)])
+        repres.append([word, " "])
 
+    return repres;
+
+
+
+def definitionRepresentation (words,dic):
+    repres = []
+    for word in words:
+        if (word not in dic):
+            defin = getOneDefinition(word,dic)
+            if (defin != ""):
+                repres.append([word,defin])
+        else :
+            repres.append([word,dic[word]])
     return repres;
