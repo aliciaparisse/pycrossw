@@ -8,7 +8,7 @@ api_key = "0a191cb87c353380850028a93e705f18a8a1cebe13f4e8c15"
 root_url = "http://api.wordnik.com:80/v4"
 
 # Dictionnary representing the different possibilities(used for function improved_definition)
-options = {0: "def", 1: "synonym", 2: "antonym", 3: "hypernym", 4: "hoponym", 5: "same-context", 6: "equivalent"}
+options = {0: "def", 1: "synonym", 2: "antonym", 3: "hypernym", 4: "hoponym", 5: "same-context"}
 
 
 def getOneDefinition(word, dic, json):
@@ -31,7 +31,7 @@ def getOneDefinition(word, dic, json):
 
 
 # Function needed to construct the dictionnary
-def improved_definition(word, dic):
+def improved_definition(word, dic, help):
     # Using the query /relatedWords, different types of related words are interesting
     # Synonymes, antonymes, hypernyms, hyponyms and same-context
 
@@ -43,7 +43,7 @@ def improved_definition(word, dic):
     nbNone = 0
 
     # Randomly choosing the option
-    indexes = list(xrange(7))
+    indexes = list(xrange(6))
 
     while indexes:
         shuffle(indexes)
@@ -71,7 +71,32 @@ def improved_definition(word, dic):
             # Getting the list of words from the option we choose
             for relation in jsonObj:
                 if relation["relationshipType"] == options[option]:
-                    definition = relation["words"]
+                    results = relation["words"]
+
+                    if (help):
+                        if relation["relationshipType"] == "synonym":
+                            definition += "Synonym  of : "
+                        elif relation["relationshipType"] == "antonym":
+                            definition += "Antonym  of : "
+                        elif relation["relationshipType"] == "hypernym":
+                            definition += "A more general concept of the word would be : "
+                        elif relation["relationshipType"] == "hoponym":
+                            definition += "A word in the same concept as the wanted word would be : "
+                        elif relation["relationshipType"] == "same-context":
+                            definition += "A word used in the same context as the wanted word would be : "
+
+                    if len(results) == 1:
+                        definition += results[0]
+                    else:
+                        n = min (len(results),5)
+                        for i in xrange(n) :
+                            if i < (n-2):
+                                definition += results[i] + ", "
+                            elif i == n-2:
+                                definition += results[i] + " "
+                            else:
+                                definition += "or " + results[i]
+
                     break
 
         if definition != "":
@@ -113,28 +138,28 @@ def representationFitness(triedOptions):
 
     return fit;
 
-def getBestDefs (words,dic, nbIt):
+def getBestDefs (words, nbIt,help):
     bestFit = len (words)
 
     for i in xrange(nbIt):
-        [repres, triedOptions] = definitionRepresentation(words, dic)
+        [repres, triedOptions] = definitionRepresentation(words,help)
 
         fitness = representationFitness(triedOptions)
-        print fitness
+
         if fitness < bestFit:
             bestRep = repres
             bestFit = fitness
 
     return bestRep;
 
-def definitionRepresentation(words, dic):
+def definitionRepresentation(words, help):
     dic = {}
     triedOptions = []
 
     repres = []
     for word in words:
         if (word not in dic):
-            [defin, opt] = improved_definition(word, dic)
+            [defin, opt] = improved_definition(word, dic, help)
             triedOptions.append(opt)
             if (defin != ""):
                 repres.append([word, defin])

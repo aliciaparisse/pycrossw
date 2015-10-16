@@ -353,8 +353,8 @@ class Word(object):
 #     ['yarn', 'A strand of twisted threads or a long elaborate narrative.'], \
 #     ['snicker', 'A snide, slightly stifled laugh.']
 
-def main(words):
-    a = Crossword(13, 13, '-', 5000, words)
+def main(words, length, height):
+    a = Crossword(length, height, '-', 5000, words)
     a.compute_crossword(2)
     #print a.word_bank()
     #print a.solution()
